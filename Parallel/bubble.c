@@ -48,28 +48,28 @@ int * merge(int * v1, int n1, int * v2, int n2)
 
 int main(int argc, char ** argv)
 {
-  int n = 10000;
+  int n = 100000;
   int * data = (int*)malloc(n*sizeof(int));
   int c, s;
   int * chunk;
   int o;
   int * other;
   int step;
-  int p, id;
+  int rank, numranks;
   MPI_Status status;
   double elapsed_time;
   int i;
 
   MPI_Init(&argc, &argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &p);
-  MPI_Comm_rank(MPI_COMM_WORLD, &id);
+  MPI_Comm_size(MPI_COMM_WORLD, &numranks);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (id == 0) {
       for(int i=0;i<n;i++){
           data[i] = rand()%1000;
       }
 
-    c = n/p; if (n%p) c++;
+    c = n/numranks; if (n%numranks) c++;
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
@@ -88,17 +88,17 @@ int main(int argc, char ** argv)
 
   bubblesort(chunk, s);
 
-  for (step = 1; step < p; step = 2*step) {
+  for (step = 1; step < numranks; step = 2*step) {
     if (id % (2*step)!=0) {
      
-      MPI_Send(chunk, s, MPI_INT, id-step, 0, MPI_COMM_WORLD);
+      MPI_Send(chunk, s, MPI_INT, rank-step, 0, MPI_COMM_WORLD);
       break;
     }
     
-    if (id+step < p) {
-      o = (n >= c * (id+2*step)) ? c * step : n - c * (id+step);
+    if (rank+step < numranks) {
+      o = (n >= c * (rank+2*step)) ? c * step : n - c * (id+step);
       other = (int *)malloc(o * sizeof(int));
-      MPI_Recv(other, o, MPI_INT, id+step, 0, MPI_COMM_WORLD, &status);
+      MPI_Recv(other, o, MPI_INT, rank+step, 0, MPI_COMM_WORLD, &status);
 
       data = merge(chunk, s, other, o);
       free(chunk);
