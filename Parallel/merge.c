@@ -13,8 +13,11 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &numrank);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	
-		
-	int n = 10;
+	double startTime, endTime; 
+	double scTime, ecTime; 
+	
+	startTime = MPI_Wtime(); 
+	int n = 1000000;
 	int size = n/numrank;
 	
 
@@ -37,6 +40,7 @@ int main(int argc, char** argv) {
 	}
     
 	int *sub = malloc(size * sizeof(int));
+	scTime = MPI_Wtime(); 
 	MPI_Scatter(array, size, MPI_INT, sub, size, MPI_INT, 0, MPI_COMM_WORLD);
 	
 	int *tmp = malloc(size * sizeof(int));
@@ -50,7 +54,7 @@ int main(int argc, char** argv) {
 		}
 	
 	MPI_Gather(sub, size, MPI_INT, sorted, size, MPI_INT, 0, MPI_COMM_WORLD);
-	
+	ecTime = MPI_Wtime(); 
 
 	if(rank == 0) {
 		
@@ -67,11 +71,20 @@ int main(int argc, char** argv) {
 			
 		printf("\n");
 	
-		
+			
+		free(sorted);
+		free(narr);
 			
 		}
- 
-	
+    free(array);
+	free(sub);
+	free(tmp);
+	endTime = MPI_Wtime(); 
+	if(rank == 0)
+	{
+		printf("Communication Time: %f \n", ecTime-scTime); 
+		printf("Total Time: %f", endTime - startTime); 
+	}
 	MPI_Finalize();
 	
 	}
