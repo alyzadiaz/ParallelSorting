@@ -1,5 +1,6 @@
 #include <stdio.h> 
 #include <stdlib.h> 
+#include "mpi.h"
 #include "quickHeader.h"
 
 void swap(int* a, int* b) { 
@@ -55,21 +56,41 @@ int * randomArray(int size){
     return (int*)array;
 }
 
-int main() { 
-    int size = 1000000; 
-	int * arr = randomArray(size); 
+int main(int argc, char **argv) {
+    int rank, numranks;
 
-    printf("Unsorted arry: \n");
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numranks);
 
-	for (int i=0; i < size; i++) {
-        printf("%d ", arr[i]);
+    int size = 6; 
+	int * arr = randomArray(size);
+    int * done = NULL;
+
+    if(rank==0){
+        printf("Unsorted array: \n");
+
+        for (int i=0; i < size; i++) {
+            printf("%d ", arr[i]);
+        }
+
+        done = (int*)malloc(size*sizeof(int));
     }
 
-	quickSort(arr, 0, size); 
+    int * subArr = (int*)malloc(size*sizeof(int));
+    MPI_Scatter(arr, size, MPI_INT, subArr, size, MPI_INT, 0, MPI_COMM_WORLD);
 
-	printf("\n");
-	printf("Sorted array: \n"); 
-	printArray(arr, size); 
+    quickSort(subArr, 0, size-1);
+    
+    MPI_Gather(arr, size, MPI_INT, done, size, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if(rank==0){
+        printf("\n");
+        printf("Sorted array: \n"); 
+        printArray(subArr, size);
+    }
+	
+    MPI_Finalize();
 
 	return 0; 
 } 
