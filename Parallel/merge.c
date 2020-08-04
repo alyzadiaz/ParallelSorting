@@ -67,14 +67,10 @@ int main(int argc, char** argv) {
 			
 		printf("\n");
 	
-			
-		free(sorted);
-		free(narr);
+		
 			
 		}
-    free(array);
-	free(sub);
-	free(tmp);
+ 
 	
 	MPI_Finalize();
 	
