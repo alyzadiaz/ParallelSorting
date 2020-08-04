@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
         printf("Unsorted array: \n");
 
         for (int i=0; i < size; i++) {
-            printf("%d ", arr[i]);
+            //printf("%d ", arr[i]);
         }
 
         start = MPI_Wtime();
@@ -83,13 +83,15 @@ int main(int argc, char **argv) {
 
     quickSort(arr, 0, size-1);
 
+    MPI_Gather(subArr, size, MPI_INT, arr, size, MPI_INT, 0, MPI_COMM_WORLD);
+
     if(rank==0){
         
         end = MPI_Wtime();
 
         printf("\n");
         printf("Sorted array: \n"); 
-        printArray(arr, size);
+        //printArray(arr, size);
 
         printf("time: %f", end-start);
     }
