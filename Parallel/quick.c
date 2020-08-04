@@ -63,9 +63,10 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numranks);
 
-    int size = 6; 
+    int size = 10000; 
 	int * arr = randomArray(size);
-    int * done = NULL;
+
+    double start, end;
 
     if(rank==0){
         printf("Unsorted array: \n");
@@ -74,20 +75,23 @@ int main(int argc, char **argv) {
             printf("%d ", arr[i]);
         }
 
-        done = (int*)malloc(size*sizeof(int));
+        start = MPI_Wtime();
     }
 
     int * subArr = (int*)malloc(size*sizeof(int));
     MPI_Scatter(arr, size, MPI_INT, subArr, size, MPI_INT, 0, MPI_COMM_WORLD);
 
-    quickSort(subArr, 0, size-1);
-    
-    MPI_Gather(arr, size, MPI_INT, done, size, MPI_INT, 0, MPI_COMM_WORLD);
+    quickSort(arr, 0, size-1);
 
     if(rank==0){
+        
+        end = MPI_Wtime();
+
         printf("\n");
         printf("Sorted array: \n"); 
-        printArray(subArr, size);
+        printArray(arr, size);
+
+        printf("time: %f", end-start);
     }
 	
     MPI_Finalize();
