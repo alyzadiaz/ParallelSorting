@@ -64,7 +64,7 @@ int main(int argc, char ** argv)
   MPI_Comm_size(MPI_COMM_WORLD, &numranks);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (id == 0) {
+  if (rank == 0) {
       for(int i=0;i<n;i++){
           data[i] = rand()%1000;
       }
@@ -77,26 +77,26 @@ int main(int argc, char ** argv)
 
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  c = n/p; if (n%p) c++;
+  c = n/numranks; if (n%numranks) c++;
   chunk = (int *)malloc(c * sizeof(int));
 
   MPI_Scatter(data, c, MPI_INT, chunk, c, MPI_INT, 0, MPI_COMM_WORLD);
   free(data);
   data = NULL;
 
-  s = (n >= c * (id+1)) ? c : n - c * id;
+  s = (n >= c * (rank+1)) ? c : n - c * rank;
 
   bubblesort(chunk, s);
 
   for (step = 1; step < numranks; step = 2*step) {
-    if (id % (2*step)!=0) {
+    if (rank % (2*step)!=0) {
      
       MPI_Send(chunk, s, MPI_INT, rank-step, 0, MPI_COMM_WORLD);
       break;
     }
     
     if (rank+step < numranks) {
-      o = (n >= c * (rank+2*step)) ? c * step : n - c * (id+step);
+      o = (n >= c * (rank+2*step)) ? c * step : n - c * (rank+step);
       other = (int *)malloc(o * sizeof(int));
       MPI_Recv(other, o, MPI_INT, rank+step, 0, MPI_COMM_WORLD, &status);
 
@@ -110,7 +110,7 @@ int main(int argc, char ** argv)
 
   elapsed_time += MPI_Wtime();
 
-  if (id == 0) {
+  if (rank == 0) {
     for(int i=0;i<n;i++){
         printf("%d ",chunk[i]);
     }
