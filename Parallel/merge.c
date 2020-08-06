@@ -7,12 +7,13 @@
 
 int main(int argc, char** argv) {
 
+	//MPI
 	int rank, numrank;
-	
 	MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numrank);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	
+	//Timings 
 	double startTime, endTime; 
 	double scTime, ecTime; 
 	
@@ -20,25 +21,26 @@ int main(int argc, char** argv) {
 	int n = 1000000;
 	int size = n/numrank;
 	
-
+	//Creating the rand values to sort
 	int *array = malloc(n * sizeof(int));
-	int c;
+	int i;
     srand(time(NULL));
     if(rank == 0)
     {
         printf("Unsorted array: ");
     }
-    
+	
 
-	for(c = 0; c < n; c++) {
+	for(i = 0; i < n; i++) {
 		
-		array[c] = rand() % n;
+		array[i] = rand() % n;
         if(rank == 0){
-        printf("%d ", array[c]);
+        printf("%d ", array[i]);
 
         }
 	}
     
+	//Splitting up the values 
 	int *sub = malloc(size * sizeof(int));
 	scTime = MPI_Wtime(); 
 	MPI_Scatter(array, size, MPI_INT, sub, size, MPI_INT, 0, MPI_COMM_WORLD);
@@ -53,9 +55,11 @@ int main(int argc, char** argv) {
 		
 		}
 	
+	//Collecting the sub arrays
 	MPI_Gather(sub, size, MPI_INT, sorted, size, MPI_INT, 0, MPI_COMM_WORLD);
 	ecTime = MPI_Wtime(); 
 
+	//Doing the Final sort and printing the sorted array
 	if(rank == 0) {
 		
 		int *narr = malloc(n * sizeof(int));
@@ -63,22 +67,19 @@ int main(int argc, char** argv) {
 		
 		
 		printf("\nSorted array: ");
-		for(c = 0; c < n; c++) {
+		for(i = 0; i < n; i++) {
 			
-			printf("%d ", sorted[c]);
+			printf("%d ", sorted[i]);
 			
 			}
 			
 		printf("\n");
 	
 			
-		free(sorted);
-		free(narr);
+	
 			
 		}
-    free(array);
-	free(sub);
-	free(tmp);
+    
 	endTime = MPI_Wtime(); 
 	if(rank == 0)
 	{
@@ -89,26 +90,29 @@ int main(int argc, char** argv) {
 	
 	}
 
-
-void merge(int *a, int *b, int l, int m, int r) {
+//Merging the array after dividing 
+void merge(int *x, int *y, int n, int m, int r) {
 	
-	int h, i, j, k;
-	h = l;
-	i = l;
+	int h;
+	int i;
+	int j;
+	int k;
+	h = n;
+	i = n;
 	j = m + 1;
 	
-	while((h <= m) && (j <= r)) {
+	while((j <= r) && (h <= m)) {
 		
-		if(a[h] <= a[j]) {
+		if(x[h] <= x[j]) {
 			
-			b[i] = a[h];
+			y[i] = x[h];
 			h++;
 			
 			}
 			
 		else {
 			
-			b[i] = a[j];
+			y[i] = x[j];
 			j++;
 			
 			}
@@ -121,7 +125,7 @@ void merge(int *a, int *b, int l, int m, int r) {
 		
 		for(k = j; k <= r; k++) {
 			
-			b[i] = a[k];
+			y[i] = x[k];
 			i++;
 			
 			}
@@ -132,33 +136,33 @@ void merge(int *a, int *b, int l, int m, int r) {
 		
 		for(k = h; k <= m; k++) {
 			
-			b[i] = a[k];
+			y[i] = x[k];
 			i++;
 			
 			}
 			
 		}
 		
-	for(k = l; k <= r; k++) {
+	for(k = n; k <= r; k++) {
 		
-		a[k] = b[k];
+		x[k] = y[k];
 		
 		}
 		
 	}
 
-
-void mergeSort(int *a, int *b, int l, int r) {
+//Sorting values withing the subarray
+void mergeSort(int *x, int *y, int n, int r) {
 	
 	int m;
 	
-	if(l < r) {
+	if(n < r) {
 		
-		m = (l + r)/2;
+		m = (n + r)/2;
 		
-		mergeSort(a, b, l, m);
-		mergeSort(a, b, (m + 1), r);
-		merge(a, b, l, m, r);
+		mergeSort(x, y, n, m);
+		mergeSort(x, y, (m + 1), r);
+		merge(x, y, n, m, r);
 		
 		}
 		
