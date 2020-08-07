@@ -1,16 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
+#include "mpi.h"
 
-void swap(int * v, int i, int j)
-{
+void swap(int * v, int i, int j){
   int t = v[i];
   v[i] = v[j];
   v[j] = t;
 }
 
-void bubblesort(int * v, int n)
-{
+void bubblesort(int * v, int n){
   int i, j;
   for (i = n-2; i >= 0; i--)
     for (j = 0; j <= i; j++)
@@ -18,12 +16,10 @@ void bubblesort(int * v, int n)
         swap(v, j, j+1);
 }
 
-int * merge(int * v1, int n1, int * v2, int n2)
-{
+int * merge(int * v1, int n1, int * v2, int n2){
   int * result = (int *)malloc((n1 + n2) * sizeof(int));
-  int i = 0;
-  int j = 0;
-  int k;
+  int i = 0, j = 0, k;
+  
   for (k = 0; k < n1 + n2; k++) {
     if (i >= n1) {
       result[k] = v2[j];
@@ -46,19 +42,12 @@ int * merge(int * v1, int n1, int * v2, int n2)
 }
 
 
-int main(int argc, char ** argv)
-{
-  int n = 100000;
+int main(int argc, char ** argv){
+  int n = 100000, c, s, o, step, i, rank, numranks;
   int * data = (int*)malloc(n*sizeof(int));
-  int c, s;
-  int * chunk;
-  int o;
-  int * other;
-  int step;
-  int rank, numranks;
+  int * chunk, other;
   MPI_Status status;
-  double elapsed_time;
-  int i;
+  double time;
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &numranks);
@@ -73,12 +62,12 @@ int main(int argc, char ** argv)
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
-  elapsed_time = - MPI_Wtime();
+  time = - MPI_Wtime();
 
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   c = n/numranks; if (n%numranks) c++;
-  chunk = (int *)malloc(c * sizeof(int));
+  chunk = (int*)malloc(c * sizeof(int));
 
   MPI_Scatter(data, c, MPI_INT, chunk, c, MPI_INT, 0, MPI_COMM_WORLD);
   free(data);
@@ -90,7 +79,6 @@ int main(int argc, char ** argv)
 
   for (step = 1; step < numranks; step = 2*step) {
     if (rank % (2*step)!=0) {
-     
       MPI_Send(chunk, s, MPI_INT, rank-step, 0, MPI_COMM_WORLD);
       break;
     }
@@ -108,15 +96,15 @@ int main(int argc, char ** argv)
     }
   }
 
-  elapsed_time += MPI_Wtime();
+  time += MPI_Wtime();
 
   if (rank == 0) {
     for(int i=0;i<n;i++){
-        printf("%d ",chunk[i]);
+      printf("%d ", chunk[i]);
     }
     printf("\n");
 
-    printf("Time: %.5f secs\n", elapsed_time);
+    printf("Time: %.5f secs\n", time);
   }
 
   MPI_Finalize();
